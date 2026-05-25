@@ -1,0 +1,53 @@
+/* ── Quill WYSIWYG overrides ── */
+
+/* Wrapper establishes stacking context so picker dropdowns don't leak over adjacent elements */
+.wysiwyg-wrapper {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    margin-bottom: 40px
+}
+
+/* Match the dashboard form field border/radius style */
+.ql-toolbar.ql-snow {
+    border-radius: 8px 8px 0 0;
+    border-color: #d6dfed;
+    background: #f8fbff;
+    padding: 6px 8px;
+    /* Ensure toolbar is above editor content */
+    position: relative;
+    z-index: 2;
+}
+
+.ql-container.ql-snow {
+    border-radius: 0 0 8px 8px;
+    border-color: #d6dfed;
+    font-size: 14px;
+    font-family: inherit;
+}
+
+.ql-editor {
+    min-height: 160px;
+    font-family: inherit;
+    line-height: 1.6;
+    color: var(--ink, #1a202c);
+    background: #f8fbff;
+}
+
+.ql-editor:focus {
+    outline: none;
+    border-color: rgba(61, 111, 214, 0.6);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(61, 111, 214, 0.15);
+}
+
+.ql-editor.ql-blank::before {
+    color: #9ca3af;
+    font-style: normal;
+}
+
+/* Picker dropdowns must sit above form elements below the editor */
+.ql-snow .ql-picker-options {
+    z-index: 10;
+}
+

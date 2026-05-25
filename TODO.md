@@ -1,0 +1,1 @@
+1. Sort according to file extensions for different files e.g create folders for videos, images etc

@@ -1,0 +1,251 @@
+@extends('admin.layout')
+
+@section('title', 'Create ' . ucfirst($type))
+
+@section('main')
+    @php($routePrefix = $type === 'exam' ? 'admin.exams' : 'admin.quizzes')
+    <main class="main">
+        <header class="topbar">
+            <div class="greeting">
+                <p class="eyebrow">{{ __('Admin') }}</p>
+                <h1>Create {{ ucfirst($type) }}</h1>
+                <p class="subtext">Add a {{ $type }} tied to {{ $installMode->isGeneric() ? 'course and topic' : 'class, subject, and topic' }}.</p>
+            </div>
+            <div class="actions">
+                <a class="btn ghost" href="{{ route($routePrefix . '.index') }}">Back to {{ ucfirst($type) }}s</a>
+                <form action="{{ route('logout') }}" method="post">
+                    @csrf
+                    <button class="btn primary" type="submit">{{ __('Logout') }}</button>
+                </form>
+            </div>
+        </header>
+
+        <section class="panel">
+            <div class="panel-header">
+                <h4>{{ ucfirst($type) }} Details</h4>
+                <span class="badge gold">{{ __('Required') }}</span>
+            </div>
+            <div class="panel-body">
+                <form class="form-grid" action="{{ route($routePrefix . '.store') }}" method="post">
+                    @csrf
+                    <div class="form-field">
+                        <label for="title">{{ __('Title') }}</label>
+                        <input id="title" name="title" type="text" value="{{ old('title') }}" required>
+                        @error('title')
+                            <span class="form-error">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    @if ($installMode->isSchool())
+                    <div class="form-field">
+                        <label for="school_class_id">{{ __('Class') }}</label>
+                        <select id="school_class_id" name="school_class_id" required>
+                            <option value="" disabled @selected(!old('school_class_id'))>{{ __('Select a class') }}</option>
+                            @foreach ($classes as $class)
+                                <option value="{{ $class->id }}" @selected(old('school_class_id') == $class->id)>{{ $class->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('school_class_id')
+                            <span class="form-error">{{ $message }}</span>
+                        @enderror
+                    </div>
+                    @endif
+
+                    <div class="form-field">
+                        <label for="subject_id">{{ $installMode->isGeneric() ? __('Course') : __('Subject') }}</label>
+                        @if ($installMode->isGeneric())
+                            <select id="subject_id" name="subject_id" required>
+                                <option value="" disabled @selected(!old('subject_id'))>{{ __('Select a course') }}</option>
+                                @foreach ($subjects as $subject)
+                                    <option value="{{ $subject->id }}" @selected(old('subject_id') == $subject->id)>{{ $subject->name }}</option>
+                                @endforeach
+                            </select>
+                        @else
+                            <select id="subject_id" name="subject_id" required data-subjects-url="{{ route('admin.subjects.by-class') }}" data-selected-subject="{{ old('subject_id') }}">
+                                <option value="" disabled @selected(!old('subject_id'))>{{ __('Select a class first') }}</option>
+                            </select>
+                        @endif
+                        @error('subject_id')
+                            <span class="form-error">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="form-field">
+                        <label for="topic_id">{{ __('Topic') }}</label>
+                        <select id="topic_id" name="topic_id" required data-topics-url="{{ route('admin.topics.by-subject') }}" data-selected-topic="{{ old('topic_id') }}">
+                            <option value="" disabled @selected(!old('topic_id'))>{{ __('Select a subject first') }}</option>
+                        </select>
+                        @error('topic_id')
+                            <span class="form-error">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="form-field">
+                        <label for="time_limit_minutes">{{ __('Duration (minutes)') }}</label>
+                        <input id="time_limit_minutes" name="time_limit_minutes" type="number" min="1" max="600" value="{{ old('time_limit_minutes') }}" required>
+                        @error('time_limit_minutes')
+                            <span class="form-error">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="form-field">
+                        <label for="total_mark">{{ __('Total Mark') }}</label>
+                        <input id="total_mark" name="total_mark" type="number" min="1" max="1000" value="{{ old('total_mark') }}" required>
+                        @error('total_mark')
+                            <span class="form-error">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="form-field">
+                        <label for="pass_mark">{{ __('Pass Mark') }}</label>
+                        <input id="pass_mark" name="pass_mark" type="number" min="0" max="1000" value="{{ old('pass_mark') }}" required>
+                        @error('pass_mark')
+                            <span class="form-error">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="form-field">
+                        <label for="retake_attempts">{{ __('Retake attempts') }}</label>
+                        <input id="retake_attempts" name="retake_attempts" type="number" min="0" max="100" value="{{ old('retake_attempts', 0) }}" required>
+                        @error('retake_attempts')
+                            <span class="form-error">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="form-field form-field-full">
+                        <label for="description">{{ ucfirst($type) }} summary</label>
+                        <textarea id="description" name="description" required>{{ old('description') }}</textarea>
+                        @error('description')
+                            <span class="form-error">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="btn primary" type="submit">Create {{ ucfirst($type) }}</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </main>
+@endsection
+
+@push('scripts')
+    @if ($installMode->isSchool())
+    <script>
+        const subjectSelect = document.getElementById('subject_id');
+        const classSelect = document.getElementById('school_class_id');
+        const topicSelect = document.getElementById('topic_id');
+        if (subjectSelect && topicSelect && classSelect) {
+            const topicsUrl = topicSelect.dataset.topicsUrl;
+            const loadTopics = async (selectedTopicId) => {
+                const subjectId = subjectSelect.value;
+                const classId = classSelect.value;
+                if (!subjectId) {
+                    topicSelect.innerHTML = '<option value="" disabled selected>Select a subject first</option>';
+                    return;
+                }
+
+                topicSelect.innerHTML = '<option value="" disabled selected>Loading topics...</option>';
+                try {
+                    const url = new URL(topicsUrl, window.location.origin);
+                    url.searchParams.set('subject_id', subjectId);
+                    if (classId) {
+                        url.searchParams.set('class_id', classId);
+                    }
+                    const response = await fetch(url.toString(), {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
+                        },
+                        credentials: 'same-origin',
+                    });
+                    const data = response.ok ? await response.json() : [];
+                    let options = '<option value="" disabled>Select a topic</option>';
+                    data.forEach((topic) => {
+                        const selected = selectedTopicId && String(topic.id) === String(selectedTopicId) ? 'selected' : '';
+                        options += `<option value="${topic.id}" ${selected}>${topic.title}</option>`;
+                    });
+                    topicSelect.innerHTML = options;
+                } catch (error) {
+                    topicSelect.innerHTML = '<option value="" disabled selected>Unable to load topics</option>';
+                }
+            };
+
+            const loadSubjects = async (selectedSubjectId) => {
+                const classId = classSelect.value;
+                if (!classId) {
+                    subjectSelect.innerHTML = '<option value="" disabled selected>Select a class first</option>';
+                    topicSelect.innerHTML = '<option value="" disabled selected>Select a subject first</option>';
+                    return;
+                }
+
+                subjectSelect.innerHTML = '<option value="" disabled selected>Loading subjects...</option>';
+                try {
+                    const url = new URL(subjectSelect.dataset.subjectsUrl, window.location.origin);
+                    url.searchParams.set('class_id', classId);
+                    const response = await fetch(url.toString(), {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
+                        },
+                        credentials: 'same-origin',
+                    });
+                    const data = response.ok ? await response.json() : [];
+                    let options = '<option value="" disabled>Select a subject</option>';
+                    data.forEach((subject) => {
+                        const selected = selectedSubjectId && String(subject.id) === String(selectedSubjectId) ? 'selected' : '';
+                        options += `<option value="${subject.id}" ${selected}>${subject.name}</option>`;
+                    });
+                    subjectSelect.innerHTML = options;
+                    await loadTopics(topicSelect.dataset.selectedTopic || null);
+                } catch (error) {
+                    subjectSelect.innerHTML = '<option value="" disabled selected>Unable to load subjects</option>';
+                    topicSelect.innerHTML = '<option value="" disabled selected>Select a subject first</option>';
+                }
+            };
+
+            classSelect.addEventListener('change', () => loadSubjects(null));
+            subjectSelect.addEventListener('change', () => loadTopics(null));
+
+            const initialSubject = subjectSelect.dataset.selectedSubject || null;
+            loadSubjects(initialSubject);
+        }
+    </script>
+    @else
+    <script>
+        const subjectSelect = document.getElementById('subject_id');
+        const topicSelect = document.getElementById('topic_id');
+        if (subjectSelect && topicSelect) {
+            const loadTopics = async (selectedTopicId) => {
+                const subjectId = subjectSelect.value;
+                if (!subjectId) {
+                    topicSelect.innerHTML = '<option value="" disabled selected>Select a course first</option>';
+                    return;
+                }
+                topicSelect.innerHTML = '<option value="" disabled selected>Loading topics...</option>';
+                try {
+                    const url = new URL(topicSelect.dataset.topicsUrl, window.location.origin);
+                    url.searchParams.set('subject_id', subjectId);
+                    const response = await fetch(url.toString(), {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+                        credentials: 'same-origin',
+                    });
+                    const data = response.ok ? await response.json() : [];
+                    let options = '<option value="" disabled>Select a topic</option>';
+                    data.forEach((topic) => {
+                        const selected = selectedTopicId && String(topic.id) === String(selectedTopicId) ? 'selected' : '';
+                        options += `<option value="${topic.id}" ${selected}>${topic.title}</option>`;
+                    });
+                    topicSelect.innerHTML = options;
+                } catch (error) {
+                    topicSelect.innerHTML = '<option value="" disabled selected>Unable to load topics</option>';
+                }
+            };
+            subjectSelect.addEventListener('change', () => loadTopics(null));
+            if (subjectSelect.value) {
+                loadTopics(topicSelect.dataset.selectedTopic || null);
+            }
+        }
+    </script>
+    @endif
+@endpush

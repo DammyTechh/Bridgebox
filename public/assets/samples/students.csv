@@ -1,0 +1,4 @@
+﻿name,email,phone,school_class,department,admission_id,password,auto_generate
+Tomiwa Adeyemi,tomiwa.adeyemi@bridgebox.edu,08030000001,JSS1,Science,ADM-1001,Passw0rd!,0
+Zainab Bello,zainab.bello@bridgebox.edu,08030000002,SS1,Arts,ADM-1002,,1
+Emeka Okoro,emeka.okoro@bridgebox.edu,08030000003,Primary 5,,ADM-1003,BridgeBox@123,0
