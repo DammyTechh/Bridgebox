@@ -56,9 +56,15 @@ class SystemStatusService
 
     private function getHotspotConnection(): ?array
     {
-        $output = $this->runCommand('nmcli -t -f NAME,TYPE,DEVICE,ACTIVE,UUID con show --active');
-        if ($output === null) {
-            return null;
+        $output = $this->runCommand('iw dev wlan0 info');
+
+        if ($output && str_contains($output, 'type AP')) {
+            return [
+		'name' => 'BridgeBox_AP',
+		'ssid' => 'BridgeBox_AP',
+		'device' => 'wlan0'
+
+		];
         }
 
         $lines = array_filter(explode("\n", trim($output)));
@@ -171,50 +177,46 @@ class SystemStatusService
      * BATT is the battery percentage (0-100).
      * VOLT is the raw cell voltage (used as a fallback label only).
      */
-    private function getPowerHealth(): string
-    {
-        $path = '/tmp/uart_data.txt';
+     
+  private function getPowerHealth(): string
+{
+    $path = '/tmp/uart_data.json';
 
-        if (!is_readable($path)) {
-            return 'Unknown';
-        }
-
-        $contents = @file_get_contents($path);
-        if ($contents === false || trim($contents) === '') {
-            return 'Unknown';
-        }
-
-        $batt = null;
-        $volt = null;
-
-        foreach (explode("\n", $contents) as $line) {
-            $line = trim($line);
-            if ($line === '') {
-                continue;
-            }
-            // Accept both KEY=VALUE and KEY: VALUE formats
-            if (preg_match('/^BATT\s*[=:]\s*([0-9.]+)/i', $line, $m)) {
-                $batt = (float) $m[1];
-            } elseif (preg_match('/^VOLT\s*[=:]\s*([0-9.]+)/i', $line, $m)) {
-                $volt = (float) $m[1];
-            }
-        }
-
-        if ($batt !== null) {
-            $pct = (int) max(0, min(100, round($batt)));
-            // Include voltage alongside percentage when available
-            if ($volt !== null) {
-                return "{$pct}% · " . number_format($volt, 2) . 'V';
-            }
-            return "{$pct}%";
-        }
-
-        if ($volt !== null) {
-            return number_format($volt, 2) . 'V';
-        }
-
+    if (!is_readable($path)) {
         return 'Unknown';
     }
+
+    $contents = file_get_contents($path);
+    if ($contents === false || trim($contents) === '') {
+        return 'Unknown';
+    }
+
+    $data = json_decode($contents, true);
+
+    if (!is_array($data)) {
+        return 'Unknown';
+    }
+
+    $batt = $data['battery'] ?? null;
+    $volt = $data['voltage'] ?? null;
+
+    if ($batt !== null) {
+        $pct = (int) max(0, min(100, round($batt)));
+
+        if ($volt !== null) {
+            return "{$pct}% · " . number_format((float)$volt, 2) . 'V';
+        }
+
+        return "{$pct}%";
+    }
+
+    if ($volt !== null) {
+        return number_format((float)$volt, 2) . 'V';
+    }
+
+    return 'Unknown';
+}
+
 
     private function getUptime(): string
     {

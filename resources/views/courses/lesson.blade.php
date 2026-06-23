@@ -2,18 +2,22 @@
 
 @section('title', $lesson->title)
 
-@section('content')
-    <div class="page-header">
-        <div class="breadcrumb">
-            <a href="{{ route('courses.index') }}">{{ __('Courses') }}</a>
-            <span>›</span>
-            <a href="{{ route('courses.show', $subject) }}">{{ $subject->name }}</a>
-            <span>›</span>
-            <span>{{ $topic->title }}</span>
+@section('hero')
+    <div class="courses-hero">
+        <div class="hero-inner">
+            <div class="hero-breadcrumb">
+                <a href="{{ route('courses.index') }}">{{ __('Courses') }}</a>
+                <span aria-hidden="true">›</span>
+                <a href="{{ route('courses.show', $subject) }}">{{ $subject->name }}</a>
+                <span aria-hidden="true">›</span>
+                <span>{{ $topic->title }}</span>
+            </div>
+            <h1>{{ $lesson->title }}</h1>
         </div>
-        <h1>{{ $lesson->title }}</h1>
     </div>
+@endsection
 
+@section('content')
     <div class="lesson-viewer">
         @if ($lesson->content)
             <div class="lesson-content">

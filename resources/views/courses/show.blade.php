@@ -2,25 +2,33 @@
 
 @section('title', $subject->name)
 
-@section('content')
-    <div class="page-header">
-        <div class="breadcrumb">
-            <a href="{{ route('courses.index') }}">{{ __('Courses') }}</a>
-            <span>›</span>
-            <span>{{ $subject->name }}</span>
+@section('hero')
+    <div class="courses-hero">
+        <div class="hero-inner">
+            <div class="hero-breadcrumb">
+                <a href="{{ route('courses.index') }}">{{ __('Courses') }}</a>
+                <span aria-hidden="true">›</span>
+                <span>{{ $subject->name }}</span>
+            </div>
+            @if ($subject->code)
+                <div class="hero-eyebrow">{{ $subject->code }}</div>
+            @endif
+            <h1>{{ $subject->name }}</h1>
+            @if ($subject->description)
+                <p class="hero-sub">{{ $subject->description }}</p>
+            @endif
         </div>
-        <h1>{{ $subject->name }}</h1>
-        @if ($subject->description)
-            <p class="subtext">{{ $subject->description }}</p>
-        @endif
     </div>
+@endsection
 
+@section('content')
     @if ($topics->isEmpty())
         <div class="empty-state">
             <strong>{{ __('No topics yet') }}</strong>
             <p>{{ __('Topics will appear here once they are added to this course.') }}</p>
         </div>
     @else
+        <div class="section-label">{{ __('Course contents') }}</div>
         <div class="topic-list">
             @foreach ($topics as $topic)
                 <div class="topic-block{{ $loop->first ? ' open' : '' }}">

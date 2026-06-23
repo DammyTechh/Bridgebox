@@ -54,6 +54,11 @@ Route::prefix('courses')->name('courses.')->group(function () {
     Route::get('/{subject}/{topic}/{lesson}/download', [\App\Http\Controllers\Courses\CoursesController::class, 'download'])->name('lesson.download');
 });
 
+// Mode switch (admin only — changes school ↔ generic without re-installing)
+Route::post('/switch-mode', [\App\Http\Controllers\SwitchModeController::class, 'switch'])
+    ->middleware('role:admin')
+    ->name('switch.mode');
+
 Route::get('/install', [\App\Http\Controllers\InstallController::class, 'show'])->name('install.show');
 Route::get('/install/school', [\App\Http\Controllers\InstallController::class, 'showSchool'])->name('install.school.show');
 Route::post('/install', [\App\Http\Controllers\InstallController::class, 'store'])->name('install.store');
@@ -441,7 +446,7 @@ Route::prefix('dashboard/teacher')
 Route::get('/dashboard/student', [StudentDashboardController::class, 'index'])
     ->middleware('role:student')
     ->name('dashboard.student');
-    
+
 Route::middleware(['auth'])->prefix('usb')->name('usb.')->group(function () {
     // Read-only listing of imported content (any authenticated user, incl. students)
     Route::get('/list',     [\App\Http\Controllers\UsbImportController::class, 'index'])->name('list');
